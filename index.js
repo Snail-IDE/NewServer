@@ -581,7 +581,7 @@ app.get('/api/users/login', async function (req, res) { // login with scratch
         //       thank you cors, you finally did something useful
 
         // malicious APPS could, but at that point your just :trollface:d so :idk_man:
-        const invalidRedirect = response.redirect !== 'https://snailshare-server.onrender.com/api/users/login';
+        const invalidRedirect = response.redirect !== 'https://snailshare-backend.glitch.me/api/users/login';
         if ((!response.valid) || (invalidRedirect)) {
             res.status(400);
             res.header("Content-Type", 'application/json');
@@ -616,7 +616,7 @@ app.get('/api/users/loginLocal', async function (req, res) { // login with local
 
         // malicious APPS could, but at that point your just :trollface:d so :idk_man:
         const invalidRedirect =
-            response.redirect !== 'https://snailshare-server.onrender.com/api/users/loginLocal'
+            response.redirect !== 'https://snailshare-backend.glitch.me/api/users/loginLocal'
             && response.redirect !== 'http://localhost:8080/api/users/loginLocal';
         if ((!response.valid) || (invalidRedirect)) {
             res.status(400);
@@ -1781,7 +1781,7 @@ app.get('/api/projects/approve', async function (req, res) {
     }
     {
         // post log
-        const projectImage = String(`https://snailshare-server.onrender.com/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
+        const projectImage = String(`https://snailshare-backend.glitch.me/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
         const body = JSON.stringify({
             content: `"${project.name}" was approved by ${packet.approver}`,
             embeds: [{
@@ -1814,7 +1814,7 @@ app.get('/api/projects/approve', async function (req, res) {
     res.header("Content-Type", 'application/json');
     res.json({ "success": true });
     if (Cast.toBoolean(req.query.webhook) === false) return;
-    const projectImage = String(`https://snailshare-server.onrender.com/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
+    const projectImage = String(`https://snailshare-backend.glitch.me/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
     const body = JSON.stringify({
         content: `A project was ${isUpdated ? "updated" : (isRemix ? "remixed" : "approved")}!`,
         embeds: [{
@@ -2221,7 +2221,7 @@ app.get('/api/projects/feature', async function (req, res) {
     res.header("Content-Type", 'application/json');
     res.json({ "success": true });
     if (Cast.toBoolean(req.query.webhook) === false) return;
-    const projectImage = String(`https://snailshare-server.onrender.com/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
+    const projectImage = String(`https://snailshare-backend.glitch.me/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
     const projectTitle = String(project.name).substring(0, 250);
     const body = JSON.stringify({
         content: `⭐ **${projectTitle}** was **featured**! ⭐`,
@@ -2332,7 +2332,7 @@ app.post('/api/projects/toggleProjectVote', async function (req, res) {
         }
         if (project.featureWebhookSent !== true) {
             project.featureWebhookSent = true;
-            const projectImage = String(`https://snailshare-server.onrender.com/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
+            const projectImage = String(`https://snailshare-backend.glitch.me/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
             const projectTitle = String(project.name).substring(0, 250);
             const body = JSON.stringify({
                 content: `⭐ **${projectTitle}** has been **community featured!** ⭐`,
