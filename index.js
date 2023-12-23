@@ -50,8 +50,8 @@ function DecryptArray(array) {
     return na;
 }
 app.use((req, res, next) => {
-  // Allow requests from both 'https://snail-ide.vercel.app' and 'https://snail-ide.js.org'
-  res.header('Access-Control-Allow-Origin', 'https://snail-ide.vercel.app/', 'https://snail-ide.js.org');
+  // Allow requests from both 'https://snail-ide.vercel.app' and 'https://snail-ide.js.org,' this also allows our test frontend
+  res.header('Access-Control-Allow-Origin', 'https://snail-ide.vercel.app/', 'https://snail-ide.js.org', 'https://test-henna-alpha-94.vercel.app/');
   // You can also use '*' to allow any origin, but this is less secure
   // res.header('Access-Control-Allow-Origin', '*');
   next();
