@@ -126,18 +126,21 @@
       "type": "featured",
       "projectId": 9270288941473,
       "name": "this is snail 1.1",
-      "id": "OTYzOTguMTg2Mjk3NjkyMTQuMTc3MTYuMDU2OTIzMzYwNjkuOTcwNzkuNDgxMzI5MTg5NzcuODU2NC4wNjM5MTU0OTYxMTI="
+      "id": "OTYzOTguMTg2Mjk3NjkyMTQuMTc3MTYuMDU2OTIzMzYwNjkuOTcwNzkuNDgxMzI5MTg5NzcuODU2NC4wNjM5MTU0OTYxMTI=",
+      "read": true
     },
     {
       "type": "newBadge",
       "name": "featured",
-      "id": "NjkxMjcuNDM4NTI3MDMwMDEuODk4NzguNzU3OTI4OTA3Ny4yMjc5OC4xNDk4ODA5NjM2MDMuNjA3ODAuODUwNDE3MjE2Mw=="
+      "id": "NjkxMjcuNDM4NTI3MDMwMDEuODk4NzguNzU3OTI4OTA3Ny4yMjc5OC4xNDk4ODA5NjM2MDMuNjA3ODAuODUwNDE3MjE2Mw==",
+      "read": true
     },
     {
       "type": "featured",
       "projectId": 3273317973028,
       "name": "trying to get this featured lol",
-      "id": "OTE0NS43OTIyOTIxNjg5NDIuOTcyOS44NjY1MTEzMTU1MTEuNjE0MjAuNjg1OTI1NjE2NDQ2Ljk4MjE0LjY0NDEzNDI2NjE0"
+      "id": "OTE0NS43OTIyOTIxNjg5NDIuOTcyOS44NjY1MTEzMTU1MTEuNjE0MjAuNjg1OTI1NjE2NDQ2Ljk4MjE0LjY0NDEzNDI2NjE0",
+      "read": true
     }
   ],
   "Tvoigt155": [
