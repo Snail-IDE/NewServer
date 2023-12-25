@@ -2058,7 +2058,7 @@ app.post('/api/projects/restoreRejected', async function (req, res) {
                 "id": projectId,
                 "name": "Unknown Project " + projectId,
                 "instructions": "",
-                "notes": "This project was restored, but it's information was missing or corrupted.\nPlease edit the project to restore this information.",
+                "notes": "This project was restored, but it's information was missing or corrupted.\nPlease edit the project to restore this information.\n",
                 "owner": packet.approver, // we dont know the owner
                 "featured": false,
                 "accepted": true,
