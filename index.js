@@ -521,7 +521,7 @@ app.get('/api/pmWrapper/iconUrl', async function (req, res) { // get icon url of
         res.json({ "error": "IdNotValid" });
         return;
     }
-    fs.readFile(`./projects/uploadedImages/p${json.id}.png`, (err, buffer) => {
+    fs.readFile(`./projects/uploadedImages/p${json.id}.gif`, (err, buffer) => {
         if (err) {
             res.status(404);
             res.json({
@@ -1925,7 +1925,7 @@ app.post('/api/projects/reject', async function (req, res) {
     });
     db.delete(String(packet.id));
     const projectFilePath = `./projects/uploaded/p${packet.id}.snail`;
-    const projectImagePath = `./projects/uploadedImages/p${packet.id}.png`;
+    const projectImagePath = `./projects/uploadedImages/p${packet.id}.gif`;
     const backupProjectMetaPath = `./projects/backup/proj${packet.id}.json`;
     fs.writeFile(backupProjectMetaPath, JSON.stringify(project, null, 4), 'utf8', (err) => {
         if (err) return console.log('failed to backup project meta for', packet.id);
@@ -1941,7 +1941,7 @@ app.post('/api/projects/reject', async function (req, res) {
     });
     fs.readFile(projectImagePath, (err, data) => {
         if (err) return console.log('failed to open image for', packet.id, ', will not be deleted from rejection');
-        fs.writeFile(`./projects/backup/proj${packet.id}.png`, data, (err) => {
+        fs.writeFile(`./projects/backup/proj${packet.id}.gif`, data, (err) => {
             if (err) return console.log('failed to backup project image for', packet.id, ', will not be deleted from rejection');
             fs.unlink(projectImagePath, err => {
                 if (err) console.log("failed to delete project image for", packet.id, ";", err);
@@ -2019,11 +2019,11 @@ app.post('/api/projects/restoreRejected', async function (req, res) {
     const projectId = packet.id;
 
     const backupProjectFilePath = `./projects/backup/proj${projectId}.pmp`;
-    const backupProjectImagePath = `./projects/backup/proj${projectId}.png`;
+    const backupProjectImagePath = `./projects/backup/proj${projectId}.gif`;
     const backupProjectMetaPath = `./projects/backup/proj${projectId}.json`;
 
     const restoredProjectFilePath = `./projects/uploaded/p${projectId}.snail`;
-    const restoredProjectImagePath = `./projects/uploadedImages/p${projectId}.png`;
+    const restoredProjectImagePath = `./projects/uploadedImages/p${projectId}.gif`;
     // PROJECT FILE
     fs.readFile(backupProjectFilePath, (err, data) => {
         if (err) {
@@ -2143,7 +2143,7 @@ app.post('/api/projects/deleteRejected', async function (req, res) {
     const projectId = packet.id;
 
     const backupProjectFilePath = `./projects/backup/proj${projectId}.pmp`;
-    const backupProjectImagePath = `./projects/backup/proj${projectId}.png`;
+    const backupProjectImagePath = `./projects/backup/proj${projectId}.gif`;
     const backupProjectMetaPath = `./projects/backup/proj${projectId}.json`;
     // PROJECT FILE
     fs.unlink(backupProjectFilePath, (err) => {
@@ -2423,7 +2423,7 @@ app.get('/api/projects/delete', async function (req, res) {
     fs.unlink(`./projects/uploaded/p${packet.id}.snail`, err => {
         if (err) console.log("failed to delete project data for", packet.id, ";", err);
     })
-    fs.unlink(`./projects/uploadedImages/p${packet.id}.png`, err => {
+    fs.unlink(`./projects/uploadedImages/p${packet.id}.gif`, err => {
         if (err) console.log("failed to delete project image for", packet.id, ";", err);
     })
     console.log(packet.approver, "deleted", packet.id);
@@ -2603,7 +2603,7 @@ app.post('/api/projects/update', async function (req, res) {
     if (Cast.isString(projectbufferImage)) {
         const buffer = Cast.dataURLToBuffer(projectbufferImage);
         if (buffer) {
-            fs.writeFile(`./projects/uploadedImages/p${id}.png`, buffer, (err) => {
+            fs.writeFile(`./projects/uploadedImages/p${id}.gif`, buffer, (err) => {
                 if (err) console.error(err);
             });
         }
@@ -2927,7 +2927,7 @@ app.post('/api/projects/publish', async function (req, res) {
     });
     const image = Cast.dataURLToBuffer(packet.image);
     if (image) {
-        fs.writeFile(`./projects/uploadedImages/p${id}.png`, image, (err) => {
+        fs.writeFile(`./projects/uploadedImages/p${id}.gif`, image, (err) => {
             if (err) console.error(err);
         });
     }
