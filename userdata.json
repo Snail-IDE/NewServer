@@ -1,6 +1,21 @@
 {
   "Mr_rudy": {
-    "firstLogin": 1703560427568
+    "firstLogin": 1703560427568,
+    "badges": [
+      "owner",
+      "dev",
+      "admin",
+      "approver",
+      "birthday",
+      "extensions",
+      "bugreport",
+      "featured",
+      "votes",
+      "likes",
+      "followers",
+      "amongus"
+    ],
+    "rank": 1
   },
   "BA4X": {
     "firstLogin": 1703564177564,
