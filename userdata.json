@@ -44,12 +44,32 @@
     "firstLogin": 1703615799889
   },
   "dogstudios55": {
-    "firstLogin": 1703632943311
+    "firstLogin": 1703632943311,
+    "badges": [
+      "bugreport",
+      "cool_award"
+    ]
   },
   "LEANDSCRATCHER123": {
     "firstLogin": 1703670464614
   },
   "kirbykirby990": {
     "firstLogin": 1703685338734
+  },
+  "Tvoigt155": {
+    "badges": [
+      "cool_award"
+    ]
+  },
+  "carters3421": {
+    "badges": [
+      "dev",
+      "admin",
+      "approver",
+      "birthday",
+      "amongus",
+      "purple",
+      "cool_award"
+    ]
   }
 }
