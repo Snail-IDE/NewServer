@@ -21,6 +21,7 @@
     "firstLogin": 1703564177564,
     "badges": [
       "dev",
+      "admin",
       "approver",
       "birthday",
       "translator",
@@ -31,7 +32,8 @@
       "likes",
       "followers",
       "amongus",
-      "purple"
+      "purple",
+      "cool_award"
     ],
     "rank": 1
   },
