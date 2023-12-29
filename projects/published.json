@@ -412,14 +412,11 @@
     "instructions": "",
     "notes": "",
     "owner": "Mr_rudy",
-    "featured": true,
+    "featured": false,
     "accepted": true,
     "date": 1703801503275,
-    "views": 4,
+    "views": 3,
     "loves": [],
-    "votes": [
-      "U2FsdGVkX1/k6I8VKQvbw6zXZLq6K9V8foV6xa94B2c=",
-      "U2FsdGVkX18yrmXL3yvi4Nhpjs6K4w9c4CGx6ZS//uo="
-    ]
+    "votes": []
   }
 }
