@@ -389,7 +389,7 @@
     "featured": false,
     "accepted": true,
     "date": 1703670576827,
-    "views": 8,
+    "views": 9,
     "loves": [],
     "votes": []
   },
@@ -415,7 +415,7 @@
     "featured": false,
     "accepted": true,
     "date": 1703801503275,
-    "views": 18,
+    "views": 19,
     "loves": [],
     "votes": []
   },
@@ -442,6 +442,19 @@
     "accepted": true,
     "date": 1703879471282,
     "views": 10,
+    "loves": [],
+    "votes": []
+  },
+  "7187953469130": {
+    "id": 7187953469130,
+    "name": "Snail clicker",
+    "instructions": "Click snail and buy upgrades\nVirtual cursor controls:\nArrows, WASD, D+PAD - move cursor\nEnter, space, gamepad: A/X/3 - click\n",
+    "notes": "Shop by @hubert_stach78",
+    "owner": "julianlukasiak",
+    "featured": false,
+    "accepted": true,
+    "date": 1703963186314,
+    "views": 2,
     "loves": [],
     "votes": []
   }
