@@ -221,6 +221,7 @@ const GenerateProfileJSON = (username) => {
     const rawBadges = UserManager.getProperty(username, "badges");
     const badges = Array.isArray(rawBadges) ? rawBadges : [];
     const isDonator = badges.includes('donator');
+    const isCool = badges.includes('cool_award')
 
     let rank = UserManager.getProperty(username, "rank");
     if (typeof rank !== "number") rank = 0;
@@ -242,6 +243,7 @@ const GenerateProfileJSON = (username) => {
         banned: UserManager.isBanned(username), // skipped in /profile but provided in /usernameFromCode
         badges,
         donator: isDonator,
+        cool: isCool,
         rank,
         followers: followers.length,
         canrankup: canRequestRankUp && rank === 0,
