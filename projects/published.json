@@ -490,10 +490,10 @@
     "instructions": "",
     "notes": "A 3D project I made in about 15 minutes",
     "owner": "chromeosphere",
-    "featured": false,
+    "featured": true,
     "accepted": true,
     "date": 1704366758506,
-    "views": 7,
+    "views": 9,
     "loves": [],
     "votes": []
   },
@@ -506,7 +506,7 @@
     "featured": false,
     "accepted": true,
     "date": 1704380081806,
-    "views": 7,
+    "views": 8,
     "loves": [],
     "votes": []
   },
