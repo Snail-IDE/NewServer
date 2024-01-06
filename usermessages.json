@@ -8,5 +8,29 @@
       "id": "NTQ3OTUuOTQ1ODk5ODM4MzQuNjU5OTkuNTgxOTM4MTUwNTEuODg5OC4yNjA1NTg5ODUwMTUuNTA0NjYuNzc4ODI4NDQxNzk=",
       "read": true
     }
+  ],
+  "CrazyFin9999": [
+    {
+      "projectId": "3667280896757",
+      "type": "reject",
+      "name": "online chatroom in just 16 blocks!",
+      "reason": "This is a chatroom project, for this project to be allowed on our website, you must chat with prebuilt messages.",
+      "projectData": {
+        "id": 3667280896757,
+        "name": "online chatroom in just 16 blocks!",
+        "instructions": "self explanitory ngl",
+        "notes": "",
+        "owner": "CrazyFin9999",
+        "featured": false,
+        "accepted": true,
+        "date": 1704545248349,
+        "views": 6,
+        "loves": [],
+        "votes": []
+      },
+      "disputable": true,
+      "moderator": true,
+      "id": "NjMyNTUuMjcxODcxNTA1NDM2Ljc5Nzg4LjAxOTc2NDgxODMxLjU3MDMyLjI1MTM0MzM5NTY3LjkwOTExLjY4MzAyMDExOTky"
+    }
   ]
 }
