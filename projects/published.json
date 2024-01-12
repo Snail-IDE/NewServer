@@ -545,7 +545,7 @@
     "featured": false,
     "accepted": true,
     "date": 1704411320876,
-    "views": 21,
+    "views": 22,
     "loves": [],
     "votes": []
   },
@@ -597,7 +597,7 @@
     "featured": false,
     "accepted": true,
     "date": 1704497865527,
-    "views": 30,
+    "views": 31,
     "loves": [],
     "votes": []
   },
@@ -610,7 +610,7 @@
     "featured": false,
     "accepted": true,
     "date": 1704597053237,
-    "views": 13,
+    "views": 14,
     "loves": [],
     "votes": []
   },
@@ -636,7 +636,7 @@
     "featured": false,
     "accepted": true,
     "date": 1704658859608,
-    "views": 14,
+    "views": 15,
     "loves": [],
     "votes": []
   },
@@ -715,6 +715,19 @@
     "accepted": true,
     "date": 1705015875945,
     "views": 5,
+    "loves": [],
+    "votes": []
+  },
+  "2278990665483": {
+    "id": 2278990665483,
+    "name": "Recording test",
+    "instructions": "playback/record test",
+    "notes": "",
+    "owner": "chromeosphere",
+    "featured": false,
+    "accepted": true,
+    "date": 1705086933632,
+    "views": 2,
     "loves": [],
     "votes": []
   }
