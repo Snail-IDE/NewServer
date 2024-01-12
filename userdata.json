@@ -146,7 +146,12 @@
     "firstLogin": 1704305475253
   },
   "chromeosphere": {
-    "firstLogin": 1704358180915
+    "firstLogin": 1704358180915,
+    "rank": 1,
+    "badges": [
+      "featured",
+      "cool_award"
+    ]
   },
   "--CoreDesigns--": {
     "firstLogin": 1704416561046
