@@ -197,7 +197,7 @@
     "featured": true,
     "accepted": true,
     "date": 1702932731656,
-    "views": 54,
+    "views": 55,
     "loves": [
       "U2FsdGVkX1+irHjsnGoHNfzptZIHnYxsFeBWbhFLl3s="
     ],
@@ -493,7 +493,7 @@
     "featured": true,
     "accepted": true,
     "date": 1704366758506,
-    "views": 41,
+    "views": 42,
     "loves": [],
     "votes": []
   },
@@ -714,20 +714,21 @@
     "featured": false,
     "accepted": true,
     "date": 1705015875945,
-    "views": 6,
+    "views": 8,
     "loves": [],
     "votes": []
   },
-  "8464288473852": {
-    "id": 8464288473852,
-    "name": "Recording test",
+  "3967593377045": {
+    "id": 3967593377045,
+    "name": "Recorder test",
     "instructions": "",
     "notes": "",
     "owner": "chromeosphere",
     "featured": false,
     "accepted": true,
-    "date": 1705095632335,
-    "views": 1,
+    "remix": 8464288473852,
+    "date": 1705096127589,
+    "views": 2,
     "loves": [],
     "votes": []
   }
