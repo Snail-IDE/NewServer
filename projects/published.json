@@ -22,7 +22,7 @@
     "featured": false,
     "accepted": true,
     "date": 1701730669961,
-    "views": 60,
+    "views": 61,
     "loves": [],
     "votes": []
   },
@@ -742,6 +742,20 @@
     "remix": 1014131330729,
     "date": 1705175812707,
     "views": 11,
+    "loves": [],
+    "votes": []
+  },
+  "6190755774686": {
+    "id": 6190755774686,
+    "name": "SnailGemini :snail:",
+    "instructions": "SnailGPT but Gemini",
+    "notes": "",
+    "owner": "Mr_rudy",
+    "featured": false,
+    "accepted": true,
+    "remix": 2958791758083,
+    "date": 1705377842080,
+    "views": 1,
     "loves": [],
     "votes": []
   }
