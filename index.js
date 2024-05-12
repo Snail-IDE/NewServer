@@ -586,7 +586,7 @@ app.get('/api/users/login', async function (req, res) { // login with scratch
         //       thank you cors, you finally did something useful
 
         // malicious APPS could, but at that point your just :trollface:d so :idk_man:
-        const invalidRedirect = response.redirect !== 'https://snailshare-backend.glitch.me/api/users/login';
+        const invalidRedirect = response.redirect !== 'https://snailshare.xyz/api/users/login';
         if ((!response.valid) || (invalidRedirect)) {
             res.status(400);
             res.header("Content-Type", 'application/json');
