@@ -18,6 +18,9 @@ const path = require('path');
 const rateLimit = require('express-rate-limit');
 const app = express();
 const port = 8080;
+const fetch = require("node-fetch");
+
+const Filter = require('bad-words');
 let globalOperationCounter = 0;
 
 const { encrypt, decrypt } = require("./utilities/encrypt.js");
@@ -37,7 +40,7 @@ const ApproverUsernames = new Database(`${__dirname}/approvers.json`);
 const GlobalRuntimeConfig = new Database(`${__dirname}/globalsettings.json`);
 
 // UserManager.setCode('debug', 'your-mom');
-
+let Profanity = [];
 
 app.use(express.json({ limit: '25mb' })); // Adjust the limit as needed
 app.use(express.urlencoded({ extended: true, limit: '25mb' })); // Adjust the limit
@@ -3123,6 +3126,282 @@ app.get('/api/projects/search', async function (req, res) {
     res.status(200);
     res.json(returning);
 });
+app.get('/api/getCommentsForProject', (req, res) => {
+    const db = new Database(`${__dirname}` + "/projects/published" + ".json");
+    if (!req.query.project) {
+        res.status(400);
+        res.send({"error":"InvalidRequest"});
+        return;
+    }
+    if (!db.has(req.query.project)) {
+        res.status(404);
+        res.send({"error":"NotFound"});
+        return;
+    }
+    let project = db.get(req.query.project);
+    if (!project.comments) {
+        db.set(req.query.projects, []);
+        res.send({"comments":[]});
+        return;
+    }
+    res.send({"comments":project.comments});
+});
+let commentspamratelimitthing = [];
+async function checkProfanity(text) {
+    let profanityList = Profanity;
+    if (profanityList.length == 0) {
+        profanityList = (await fetch("https://cdn.jsdelivr.net/gh/snguyenthanh/better_profanity@0.7.0/better_profanity/profanity_wordlist.txt").then(data => data.text())).split("\n")
+        Profanity = profanityList;
+    }
+    profanityList.forEach(bleh => {
+        if (String(text).toLowerCase().includes(bleh)) {
+            return true;
+        }
+    });
+    return false;
+}
+function getNewCommentId(type) {
+    let db = new Database(`${__dirname}/commentcount.json`);
+    db.add(type, 1);
+    return db.get(type);
+}
+function getLastCommented(user) {
+    let db = new Database(`${__dirname}/lastcommented.json`);
+    return db.get(user);
+}
+function setLastCommented(user, cmt) {
+    let db = new Database(`${__dirname}/lastcommented.json`);
+    return db.set(user, cmt);
+}
+function getLastReplied(user) {
+    let db = new Database(`${__dirname}/lastreplied.json`);
+    return db.get(user);
+}
+function setLastReplied(user, cmt) {
+    let db = new Database(`${__dirname}/lastreplied.json`);
+    return db.set(user, cmt);
+}
+function addToRatelimit(ip) {
+    let i = commentspamratelimitthing.length;
+    commentspamratelimitthing.push(ip);
+    setTimeout(() => {
+        commentspamratelimitthing[i] = null;
+    }, 10000);
+}
+//warning abysmal code no looking
+app.post('/api/postComment', async (req, res) => {
+    const db = new Database(`${__dirname}` + "/projects/published" + ".json");
+    const packet = req.query;
+    if (commentspamratelimitthing.includes(req.ip)) {
+        res.status(429);
+        res.send({ "error": "CommentRatelimit" });
+        return;
+    }
+    if (UserManager.isBanned(packet.author)) {
+        res.status(403);
+        res.send({ "error": "FeatureDisabledForThisAccount" });
+        return;
+    }
+    if (!UserManager.isCorrectCode(packet.author, packet.passcode)) {
+        res.status(400);
+        res.send({ "error": "Reauthenticate" });
+        if (DEBUG_logAllFailedData) console.log("Reauthenticate", packet);
+        return;
+    }
+    if (UserManager.getProperty(packet.author, "rank") < 1) {
+        res.status(403);
+        res.send({ "error": "FeatureDisabledForThisAccount" });
+        return;
+    }
+    if (!packet.content) {
+        res.status(400);
+        res.header("Content-Type", "application/json");
+        res.json({"error": "InvalidRequest"});
+        return;
+    }
+    if (!db.has(packet.project ?? "")) { // add ?? otherwise srever will crash :fail:
+        res.status(404);
+        res.header("Content-Type", "application/json");
+        res.json({"error": "NotFound"});
+        return;
+    }
+    let reply = false;
+    if (packet.reply) {
+        reply = true;
+    }
+    let filter = new Filter();
+    let comments = db.get(packet.project).comments;
+    if (!comments) {
+        comments = [];
+    }
+    let projectauthor = db.get(packet.project).owner;
+    if (getLastCommented(packet.author) === packet.content || (reply && getLastReplied(packet.author) === packet.content)) {
+        res.status(429);
+        res.header("Content-Type", "application/json");
+        res.json({"error": "Spam"});
+        return;
+    }
+    if (reply) {
+        if (!Array.isArray(comments)) {
+            comments = [];
+        }
+        let foundcomment = false;
+        let commentIndex = -1;
+        for (let i = 0; i < comments.length; i++) {
+            if (comments[i].id == packet.reply) {
+                foundcomment = true;
+                commentIndex = i;
+                break;
+            }
+        }
+        if (foundcomment) {
+            let replies = comments[commentIndex].replies || [];
+            replies.push({
+                user: packet.author,
+                text: filter.clean(packet.content),
+                type: 'reply',
+                id: getNewCommentId('reply')
+            });
+            comments[commentIndex].replies = replies;
+            let newproject = db.get(packet.project);
+            newproject.comments = comments;
+            setLastReplied(packet.author, packet.content);
+            db.set(packet.project, newproject);
+            addToRatelimit(req.ip);
+            res.header("Content-Type", "application/json");
+            res.json({"message": "success"});
+            return;
+        } else {
+            res.status(404);
+            res.header("Content-Type", "application/json");
+            res.json({"error": "ParentCommentNotFound"});
+            return;
+        }
+    } else {
+        let commentdata = {
+            user: packet.author,
+            text: filter.clean(packet.content),
+            id: getNewCommentId('comments'),
+            type: 'comment',
+            replies: []
+        };
+        if (!Array.isArray(comments)) {
+            comments = [];
+        }
+        comments.unshift(commentdata);
+        console.log(comments[comments.length-1]);
+        UserManager.addMessage(projectauthor, {
+            type: 'commentReceived',
+            project: packet.project,
+            user: packet.author,
+            comment: commentdata
+        });
+        let newproject = db.get(packet.project);
+        newproject.comments = comments;
+        db.set(packet.project, newproject);
+        addToRatelimit(req.ip);
+        setLastCommented(packet.author, packet.content);
+        res.header("Content-Type", "application/json");
+        res.json({"message": "success"});
+    }
+});
+app.post('/api/deleteComment', async (req, res) => {
+    const db = new Database(`${__dirname}` + "/projects/published" + ".json");
+    const packet = req.query
+    if (UserManager.isBanned(packet.author)) {
+        res.status(403);
+        res.send({ "error": "FeatureDisabledForThisAccount" });
+        return;
+    }
+    if (!UserManager.isCorrectCode(packet.author, packet.passcode)) {
+        res.status(400);
+        res.send({ "error": "Reauthenticate" });
+        return;
+    }
+    if (!req.query.project) {
+        res.status(400);
+        res.send({ "error": "InvalidRequest" });
+        return;
+    }
+    if (!db.has(req.query.project)) {
+        res.status(400);
+        res.send({ "error": "NotFound" });
+        return;
+    }
+    if (!req.query.id) {
+        res.status(400);
+        res.send({ "error": "InvalidRequest" });
+        return;
+    }
+    let project = db.get(req.query.project);
+    let candeletecomment = req.query.author == project.owner;
+    if (AdminAccountUsernames.get(req.query.author)) {
+        candeletecomment = true;
+    }
+    let comments = project.comments;
+    if (!comments) {
+        comments = [];
+    }
+    let foundcomment = false;
+    let i = -1;
+    let foundtype = '';
+    let commenti = 0;
+    comments.map(comment => {
+        if (comment.id == req.query.id) {
+            foundcomment = true;
+            foundtype = 'comment';
+            commentExists = true;
+            commenti = i;
+            if (req.query.author == comment.user) {
+                candeletecomment = true;
+            }
+        } else {
+            if (comment.replies) {
+                //try to see if its in replys
+                let replies = comment.replies;
+                if (!replies) {
+                    replies = [];
+                }
 
+                let foundreply = false;
+                let i2 = -1;
+                replies.map(reply => {
+                    if (reply.id == req.query.id) {
+                        foundreply = true;
+                    }
+                    if (!foundreply) i2++;
+                });
 
+                if (foundreply) {
+                    foundcomment = true;
+                    foundtype = 'reply';
+                    commenti = i;
+                    i = i2;
+                }
+            }
+        }
+        if (!foundcomment) i++;
+    });
+    if (!foundcomment) {
+        res.status(404);
+        res.send({ "error": "NotFound" });
+        return;
+    }
+    if (!candeletecomment) {
+        res.status(403);
+        res.send({ "error": "FeatureDisabledForThisAccount" });
+        return;
+    }
+    if (foundtype == 'comment') {
+        comments.splice(i,1);
+    } else {
+        let comment = comments[commenti+1];
+        comment.replies.splice(i, 1);
+        comments[commenti] = comment;
+    }
+    let newproject = db.get(req.query.project);
+    newproject.comments = comments;
+    db.set(req.query.project, newproject);
+    res.send({"message":"success"});
+});
 app.listen(port, () => console.log('Started server on port ' + port));
