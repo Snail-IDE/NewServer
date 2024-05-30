@@ -186,6 +186,11 @@ app.use(rateLimit({
     legacyHeaders: false,
 }));
 
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({"error":"Report"});
+});
+
 app.get('/', async function (_, res) { // just basic stuff. returns the home page
     res.redirect('https://snail-ide.vercel.app/');
 });
