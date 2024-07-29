@@ -52,6 +52,14 @@ function DecryptArray(array) {
     }
     return na;
 }
+function EncryptArray(array) {
+    const na = [];
+    for (const value of array) {
+        const encrypted = encrypt(value);
+        na.push(encrypted);
+    }
+    return na;
+}
 app.use((req, res, next) => {
   // Allow requests from both 'https://snail-ide.vercel.app' and 'https://snail-ide.js.org,' this also allows our test frontend
   res.header('Access-Control-Allow-Origin', 'https://snail-ide.vercel.app/', 'https://snail-ide.js.org', 'https://test-henna-alpha-94.vercel.app/', 'https://snail-ide.com', 'https://editor.snail-ide.com');
