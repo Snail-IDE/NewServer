@@ -3,6 +3,8 @@ require('dotenv').config();
 
 const BlockedIPs = require("./blockedips.json"); // if you are cloning this, make sure to make this file
 
+// TODO: Despaghettify this.
+
 const fs = require("fs");
 const jimp = require("jimp");
 const JSZip = require("jszip");
@@ -22,12 +24,14 @@ const fetch = require("node-fetch");
 
 const Filter = require('bad-words');
 let globalOperationCounter = 0;
+let warnings = 0;
 
 const { encrypt, decrypt } = require("./utilities/encrypt.js");
+const log = require("./utilities/log.js");
 
 const UserManager = require("./classes/UserManager.js");
- //const UserStorage = require("./classes/UserStorage.js");
- //const StorageSpace = new UserStorage(32000000, 3); // 32 mb per data piece, 3 keys per container
+//const UserStorage = require("./classes/UserStorage.js");
+//const StorageSpace = new UserStorage(32000000, 3); // 32 mb per data piece, 3 keys per container
 UserManager.load(); // should prevent logouts
 
 const ProjectList = require("./classes/ProjectList.js");
@@ -36,6 +40,7 @@ const ReportList = require("./classes/ReportList.js");
 
 const AdminAccountUsernames = new Database(`${__dirname}/admins.json`);
 const ApproverUsernames = new Database(`${__dirname}/approvers.json`);
+const Log = new Database(`${__dirname}/../log.json`);
 
 const GlobalRuntimeConfig = new Database(`${__dirname}/globalsettings.json`);
 
@@ -61,11 +66,11 @@ function EncryptArray(array) {
     return na;
 }
 app.use((req, res, next) => {
-  // Allow requests from both 'https://snail-ide.vercel.app' and 'https://snail-ide.js.org,' this also allows our test frontend
-  res.header('Access-Control-Allow-Origin', 'https://snail-ide.vercel.app/', 'https://snail-ide.js.org', 'https://test-henna-alpha-94.vercel.app/', 'https://snail-ide.com', 'https://editor.snail-ide.com');
-  // You can also use '*' to allow any origin, but this is less secure
-  // res.header('Access-Control-Allow-Origin', '*');
-  next();
+    // Allow requests from both 'https://snail-ide.vercel.app' and 'https://snail-ide.js.org,' this also allows our test frontend
+    res.header('Access-Control-Allow-Origin', 'https://snail-ide.vercel.app/', 'https://snail-ide.js.org', 'https://test-henna-alpha-94.vercel.app/', 'https://snail-ide.com', 'https://editor.snail-ide.com');
+    // You can also use '*' to allow any origin, but this is less secure
+    // res.header('Access-Control-Allow-Origin', '*');
+    next();
 });
 
 function SafeJSONParse(json) {
@@ -195,8 +200,8 @@ app.use(rateLimit({
 }));
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({"error":"Report"});
+    console.error(err.stack);
+    res.status(500).json({ "error": "Report" });
 });
 
 app.get('/', async function (_, res) { // just basic stuff. returns the home page
@@ -348,6 +353,7 @@ app.get('/api/users/assignPossition', async function (req, res) { // give someon
         res.status(403);
         res.header("Content-Type", 'application/json');
         res.json({ "error": "FeatureDisabledForThisAccount" });
+        log('assignPosition', `${packet.user} tried to assign a position to ${packet.target} but they were not authorized to assign them.`)
         return;
     }
     AdminAccountUsernames.set(packet.target, Cast.toBoolean(packet.admin));
@@ -380,7 +386,7 @@ app.get('/api/projects/getApproved', async function (req, res) {
     if (GlobalRuntimeConfig.get("allowGetProjects") === false) {
         res.status(403);
         res.header("Content-Type", 'application/json');
-        res.json({ "error": "FeatureDisabledForThisAccount" });
+        res.json({ "error": "FeatureDisabledForEveryone" });
         return;
     }
 
@@ -413,7 +419,7 @@ app.get('/api/projects/max', async function (req, res) {
     if (GlobalRuntimeConfig.get("allowGetProjects") === false) {
         res.status(403);
         res.header("Content-Type", 'application/json');
-        res.json({ "error": "FeatureDisabledForThisAccount" });
+        res.json({ "error": "FeatureDisabledForEveryone" });
         return;
     }
 
@@ -469,6 +475,7 @@ app.get('/api/projects/getUnapproved', async function (req, res) {
         res.status(403);
         res.header("Content-Type", 'application/json');
         res.json({ "error": "ThisAccountCannotAccessThisInformation" });
+        log('unapprovedProjects', `${packet.user} tried to access unapproved projects but they were not authorized to access them.`)
         return;
     }
     const db = new Database(`${__dirname}/projects/published.json`)
@@ -1124,6 +1131,7 @@ app.post('/api/users/ban', async function (req, res) {
         disputable: true
     });
 
+    log('ban', `${packet.username} banned user ${packet.target} because of the reason "${packet.reason}".`)
     // post log
     const body = JSON.stringify({
         content: `${bannedUser} was banned by ${packet.username}`,
@@ -1598,8 +1606,19 @@ app.post('/api/users/dispute', async function (req, res) {
         return;
     }
 
+    for (let [key, value] of Object.entries(AdminAccountUsernames.all())) {
+        if (value.data === true) UserManager.addMessage(value.key, {
+            reply: `${packet.text}`,
+            type: "dispute",
+            replyTo: `${message.reason ? message.reason : ''}`,
+            projectId: `${message.projectData ? message.projectData.id : '(not applicable)'}`,
+            id: packet.id,
+            user: packet.username, // included for less API calls
+        })
+    }
+
     // post log
-    const body = JSON.stringify({
+    /* const body = JSON.stringify({
         content: `${packet.username} replied to moderator message`,
         embeds: [{
             title: `Reply by ${packet.username}`,
@@ -1625,13 +1644,13 @@ app.post('/api/users/dispute', async function (req, res) {
             },
             timestamp: new Date().toISOString()
         }]
-    });
-    fetch(process.env.ApproverLogWebhook, {
+    }); */
+    /* fetch(process.env.ApproverLogWebhook, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body
     }).then(log => {
-        if (log.ok) {
+        if (log.ok) { */
             UserManager.modifyMessage(packet.username, packet.id, message => {
                 message.disputable = false;
                 message.dispute = packet.text ?? ''
@@ -1641,12 +1660,31 @@ app.post('/api/users/dispute', async function (req, res) {
             res.status(200);
             res.header("Content-Type", 'application/json');
             res.json({ "success": true });
-        } else {
+        /* } else {
             res.status(500);
             res.header('Content-Type', 'application/json')
             res.json({ error: 'LogFailed' })
         }
-    });
+    }); */
+});
+app.post('/api/getLog', function (req, res) {
+    const packet = req.body;
+    if (!UserManager.isCorrectCode(packet.approver, packet.passcode)) {
+        res.status(400);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "Reauthenticate" });
+        return;
+    }
+    if (
+        !AdminAccountUsernames.get(Cast.toString(packet.approver))
+        && !ApproverUsernames.get(Cast.toString(packet.approver))
+    ) {
+        res.status(403);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "FeatureDisabledForThisAccount" });
+        return;
+    }
+    return res.json(Log.all());
 });
 app.post('/api/users/disputeRespond', async function (req, res) {
     const packet = req.body;
@@ -1688,7 +1726,7 @@ app.post('/api/users/disputeRespond', async function (req, res) {
         disputable: true
     });
 
-    // post log
+    /* // post log
     const body = JSON.stringify({
         content: `${packet.approver} responded to reply from ${packet.username}`,
         embeds: [{
@@ -1720,7 +1758,7 @@ app.post('/api/users/disputeRespond', async function (req, res) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(JSON.parse(body))
-    });
+    }); */
 
     res.status(200);
     res.header("Content-Type", 'application/json');
@@ -1831,6 +1869,7 @@ app.get('/api/projects/approve', async function (req, res) {
     res.status(200);
     res.header("Content-Type", 'application/json');
     res.json({ "success": true });
+    
     if (Cast.toBoolean(req.query.webhook) === false) return;
     const projectImage = String(`https://snailshare-backend.glitch.me/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
     const body = JSON.stringify({
@@ -1854,6 +1893,91 @@ app.get('/api/projects/approve', async function (req, res) {
         body: JSON.stringify(JSON.parse(body))
     });
     // .then(res => res.text().then(t => console.log("WebhookResponse",res.status,t))).catch(err => console.log("FailedWebhookSend", err))
+});
+// nfe projects
+app.post('/api/projects/nfe', async function (req, res) {
+    const packet = req.body;
+    if (!UserManager.isCorrectCode(packet.approver, packet.passcode)) {
+        res.status(400);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "Reauthenticate" });
+        return;
+    }
+    if (
+        !AdminAccountUsernames.get(Cast.toString(packet.approver))
+        && !ApproverUsernames.get(Cast.toString(packet.approver))
+    ) {
+        res.status(403);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "FeatureDisabledForThisAccount" });
+        return;
+    }
+    if (typeof packet.reason !== "string") {
+        res.status(400);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "NFEReasonIsRequired" });
+        return;
+    }
+    if (packet.reason.length < 10) {
+        res.status(400);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "NFEReasonIsLessThan10Chars" });
+        return;
+    }
+    const db = new Database(`${__dirname}/projects/published.json`);
+    if (!db.has(String(packet.id))) {
+        res.status(400);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "NotFound" });
+        return;
+    }
+    const project = db.get(String(packet.id));
+    log('projectMarkedAsNFE', `${packet.approver} marked https://editor.snail-ide.com/#${packet.id} by https://www.snail-ide.com/profile?user=${String(project.owner)} as Not for Everyone with the reason "${packet.reason}".`);
+    UserManager.addModeratorMessage(project.owner, {
+        projectId: String(packet.id),
+        type: "nfe",
+        name: `${project.name}`, // included for less API calls
+        reason: packet.reason,
+        projectData: project,
+        disputable: true
+    });
+    project.nfe = true;
+    db.set(String(packet.id), project);
+    res.status(200);
+    res.header("Content-Type", 'application/json');
+    res.json({ "success": true });
+});
+app.post('/api/projects/undoNfe', async function (req, res) {
+    const packet = req.body;
+    if (!UserManager.isCorrectCode(packet.approver, packet.passcode)) {
+        res.status(400);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "Reauthenticate" });
+        return;
+    }
+    if (
+        !AdminAccountUsernames.get(Cast.toString(packet.approver))
+        && !ApproverUsernames.get(Cast.toString(packet.approver))
+    ) {
+        res.status(403);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "FeatureDisabledForThisAccount" });
+        return;
+    }
+    const db = new Database(`${__dirname}/projects/published.json`);
+    if (!db.has(String(packet.id))) {
+        res.status(400);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "NotFound" });
+        return;
+    }
+    const project = db.get(String(packet.id));
+    log('projectMarkedAsNotNFE', `${packet.approver} removed the mark for https://editor.snail-ide.com/#${packet.id} by https://www.snail-ide.com/profile?user=${String(project.owner)} as Not for Everyone.`);
+    project.nfe = false;
+    db.set(String(packet.id), project);
+    res.status(200);
+    res.header("Content-Type", 'application/json');
+    res.json({ "success": true });
 });
 // reject projects
 app.post('/api/projects/reject', async function (req, res) {
@@ -1900,38 +2024,7 @@ app.post('/api/projects/reject', async function (req, res) {
     //     return;
     // }
     // post log
-    const body = JSON.stringify({
-        content: `"${project.name}" was rejected by ${packet.approver}`,
-        embeds: [{
-            title: `${project.name} was rejected`,
-            color: 0xff0000,
-            fields: [
-                {
-                    name: "Rejected by",
-                    value: `${packet.approver}`
-                },
-                {
-                    name: "Project ID",
-                    value: `${project.id}`
-                },
-                {
-                    name: "Reason",
-                    value: `${packet.reason}`
-                }
-            ],
-            author: {
-                name: String(project.owner).substring(0, 50),
-                icon_url: String("https://trampoline.turbowarp.org/avatars/by-username/" + String(project.owner).substring(0, 50)),
-                url: String("https://snail-ide.vercel.app/profile?user=" + String(project.owner).substring(0, 50))
-            },
-            timestamp: new Date().toISOString()
-        }]
-    });
-    fetch(process.env.ApproverLogWebhook, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(JSON.parse(body))
-    });
+    log('projectRejected', `${packet.approver} rejected https://editor.snail-ide.com/#${packet.id} by https://www.snail-ide.com/profile?user=${String(project.owner)} with the reason "${packet.reason}".`);
     // add message
     UserManager.addModeratorMessage(project.owner, {
         projectId: String(packet.id),
@@ -1966,7 +2059,6 @@ app.post('/api/projects/reject', async function (req, res) {
             });
         });
     });
-    console.log(packet.approver, "rejected", packet.id);
     res.status(200);
     res.header("Content-Type", 'application/json');
     res.json({ "success": true });
@@ -2329,48 +2421,32 @@ app.post('/api/projects/toggleProjectVote', async function (req, res) {
         }
     }
     if ((targetType === 'votes') && (project.votes.length >= featuredVotes)) {
+        if (featuredVotes === 0) {
+            warnings += 1;
+            log('warning', `Warning: Project ${String("https://editor.snail-ide.com/#" + String(project.id))} should of been featured but the featured votes variable is set to null or zero. Refusing to feature project.`);
+        }
         // people lik this project
-        let wasFeatured = project.featured;
-        project.featured = true;
-        if (!wasFeatured) {
-            UserManager.addMessage(project.owner, {
-                type: "featured",
-                projectId: project.id,
-                name: `${project.name}` // included for less API calls
-            });
-        }
-        const newBadges = UserManager.getProperty(project.owner, "badges") ?? [];
-        if (!newBadges.includes("featured")) {
-            newBadges.push("featured");
-            UserManager.setProperty(project.owner, "badges", newBadges);
-            UserManager.addMessage(project.owner, {
-                type: "newBadge",
-                name: "featured"
-            });
-        }
-        if (project.featureWebhookSent !== true) {
-            project.featureWebhookSent = true;
-            const projectImage = String(`https://snailshare-backend.glitch.me/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
-            const projectTitle = String(project.name).substring(0, 250);
-            const body = JSON.stringify({
-                content: `⭐ **${projectTitle}** has been **community featured!** ⭐`,
-                embeds: [{
-                    title: projectTitle,
-                    image: { url: projectImage },
-                    color: 16771677,
-                    url: String("https://snail-ide.js.org/#" + String(project.id)),
-                    author: {
-                        name: String(project.owner).substring(0, 50),
-                        icon_url: String("https://trampoline.turbowarp.org/avatars/by-username/" + String(project.owner).substring(0, 50)),
-                        url: String("https://snail-ide.vercel.app/profile?user=" + String(project.owner).substring(0, 50))
-                    }
-                }]
-            });
-            fetch(process.env.DiscordWebhook, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(JSON.parse(body))
-            });
+        if (featuredVotes !== 0) {
+            let wasFeatured = project.featured;
+            project.featured = true;
+            project.featured = true;
+            if (!wasFeatured) {
+                UserManager.addMessage(project.owner, {
+                    type: "featured",
+                    projectId: project.id,
+                    name: `${project.name}` // included for less API calls
+                });
+            }
+            const newBadges = UserManager.getProperty(project.owner, "badges") ?? [];
+            if (!newBadges.includes("featured")) {
+                newBadges.push("featured");
+                UserManager.setProperty(project.owner, "badges", newBadges);
+                UserManager.addMessage(project.owner, {
+                    type: "newBadge",
+                    name: "featured"
+                });
+            }
+            log('projectFeatured', `Project ${String("https://editor.snail-ide.com/#" + String(project.id))} has been featured! Hooray!`)
         }
     }
     db.set(idToSetTo, project);
@@ -2735,7 +2811,6 @@ app.post('/api/projects/publish', async function (req, res) {
         return;
     }
     if (
-        !Cast.isString(packet.image) ||
         !Cast.isString(packet.project)
     ) {
         res.status(400);
@@ -2839,6 +2914,7 @@ app.post('/api/projects/publish', async function (req, res) {
         if (DEBUG_logAllFailedData) console.log("InvalidRestrictionFormat", packet);
         return;
     }
+    let nfe = false;
     if (packet.restrictions) {
         const usedRestrictions = [];
         for (const restriction of packet.restrictions) {
@@ -2846,7 +2922,6 @@ app.post('/api/projects/publish', async function (req, res) {
                 case 'flash':
                 case 'blood':
                 case 'scary':
-                case 'swear':
                     if (usedRestrictions.includes(restriction)) {
                         res.status(400);
                         res.header("Content-Type", 'application/json');
@@ -2856,6 +2931,10 @@ app.post('/api/projects/publish', async function (req, res) {
                     }
                     usedRestrictions.push(restriction);
                     break;
+                case 'swear':
+                    res.status(400);
+                    res.header("Content-Type", 'application/json');
+                    return res.json({ "error": "SwearingIsForbiddenOnSnailIDE" });
                 default:
                     res.status(400);
                     res.header("Content-Type", 'application/json');
@@ -2864,8 +2943,8 @@ app.post('/api/projects/publish', async function (req, res) {
                     return;
             }
         }
+        if (usedRestrictions.includes('scary')) nfe = true;
     }
-
     const project = Cast.dataURLToBuffer(packet.project);
     if (!project) {
         res.status(400);
@@ -2945,7 +3024,11 @@ app.post('/api/projects/publish', async function (req, res) {
     });
     const image = Cast.dataURLToBuffer(packet.image);
     if (image) {
-        fs.writeFile(`./projects/uploadedImages/p${id}.gif`, image, (err) => {
+        fs.writeFile(`${__dirname}/projects/uploadedImages/p${id}.gif`, image, (err) => {
+            if (err) console.error(err);
+        });
+    } else {
+        fs.copyFile(`${__dirname}/cache/thumb.png`, `${__dirname}/projects/uploadedImages/p${id}.gif`, image, (err) => {
             if (err) console.error(err);
         });
     }
@@ -3134,7 +3217,7 @@ app.get('/api/projects/search', async function (req, res) {
     // make project list
     // new ProjectList() with .toJSON will automatically cut the pages for us
     const projectsList = new ProjectList(returnArray);
-    const returning = projectsList.toJSON(true, Cast.toNumber(req.query.page));
+    const returning = projectsList.toJSON(true, Cast.toNumber(req.query.page), null, !!projectOwnerRequired);
     res.header("Content-Type", 'application/json');
     res.status(200);
     res.json(returning);
@@ -3143,21 +3226,21 @@ app.get('/api/getCommentsForProject', (req, res) => {
     const db = new Database(`${__dirname}` + "/projects/published" + ".json");
     if (!req.query.project) {
         res.status(400);
-        res.send({"error":"InvalidRequest"});
+        res.send({ "error": "InvalidRequest" });
         return;
     }
     if (!db.has(req.query.project)) {
         res.status(404);
-        res.send({"error":"NotFound"});
+        res.send({ "error": "NotFound" });
         return;
     }
     let project = db.get(req.query.project);
     if (!project.comments) {
         db.set(req.query.projects, []);
-        res.send({"comments":[]});
+        res.send({ "comments": [] });
         return;
     }
-    res.send({"comments":project.comments});
+    res.send({ "comments": project.comments });
 });
 let commentspamratelimitthing = [];
 async function checkProfanity(text) {
@@ -3229,13 +3312,13 @@ app.post('/api/postComment', async (req, res) => {
     if (!packet.content) {
         res.status(400);
         res.header("Content-Type", "application/json");
-        res.json({"error": "InvalidRequest"});
+        res.json({ "error": "InvalidRequest" });
         return;
     }
     if (!db.has(packet.project ?? "")) { // add ?? otherwise srever will crash :fail:
         res.status(404);
         res.header("Content-Type", "application/json");
-        res.json({"error": "NotFound"});
+        res.json({ "error": "NotFound" });
         return;
     }
     let reply = false;
@@ -3251,7 +3334,7 @@ app.post('/api/postComment', async (req, res) => {
     if (getLastCommented(packet.author) === packet.content || (reply && getLastReplied(packet.author) === packet.content)) {
         res.status(429);
         res.header("Content-Type", "application/json");
-        res.json({"error": "Spam"});
+        res.json({ "error": "Spam" });
         return;
     }
     if (reply) {
@@ -3282,12 +3365,12 @@ app.post('/api/postComment', async (req, res) => {
             db.set(packet.project, newproject);
             addToRatelimit(req.ip);
             res.header("Content-Type", "application/json");
-            res.json({"message": "success"});
+            res.json({ "message": "success" });
             return;
         } else {
             res.status(404);
             res.header("Content-Type", "application/json");
-            res.json({"error": "ParentCommentNotFound"});
+            res.json({ "error": "ParentCommentNotFound" });
             return;
         }
     } else {
@@ -3302,7 +3385,7 @@ app.post('/api/postComment', async (req, res) => {
             comments = [];
         }
         comments.unshift(commentdata);
-        console.log(comments[comments.length-1]);
+        console.log(comments[comments.length - 1]);
         UserManager.addMessage(projectauthor, {
             type: 'commentReceived',
             project: packet.project,
@@ -3315,7 +3398,7 @@ app.post('/api/postComment', async (req, res) => {
         addToRatelimit(req.ip);
         setLastCommented(packet.author, packet.content);
         res.header("Content-Type", "application/json");
-        res.json({"message": "success"});
+        res.json({ "message": "success" });
     }
 });
 app.post('/api/deleteComment', async (req, res) => {
@@ -3406,15 +3489,15 @@ app.post('/api/deleteComment', async (req, res) => {
         return;
     }
     if (foundtype == 'comment') {
-        comments.splice(i,1);
+        comments.splice(i, 1);
     } else {
-        let comment = comments[commenti+1];
+        let comment = comments[commenti + 1];
         comment.replies.splice(i, 1);
         comments[commenti] = comment;
     }
     let newproject = db.get(req.query.project);
     newproject.comments = comments;
     db.set(req.query.project, newproject);
-    res.send({"message":"success"});
+    res.send({ "message": "success" });
 });
 app.listen(port, () => console.log('Started server on port ' + port));

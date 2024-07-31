@@ -121,6 +121,21 @@ class Cast {
     static isString(val) {
         return typeof val === 'string';
     }
+
+    /**
+     * Checks if the value is null or NaN.
+     * @returns {boolean}
+     */
+    static isNull(val) {
+        if (!val) return true;
+        switch (String(val).toLowerCase()) {
+            case 'null':
+                return true;
+            case 'nan':
+                return true;
+        }
+        return false;
+    }
 }
 
 module.exports = Cast;

@@ -5,7 +5,7 @@ module.exports.ParseJSON = (str) => {
     } catch {
         canParse = false
     }
-    return canParse ? JSON.parse(str) : {}
+    return canParse ? JSON.parse(str) : Object.create(null);
 }
 module.exports.ParseArray = (str) => {
     if (!(String(str).startsWith("[") && String(str).endsWith("]"))) return []
