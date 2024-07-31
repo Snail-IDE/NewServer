@@ -16,7 +16,7 @@ class ProjectList {
      * @param {number?} pageLength The length of each page. If not specified, this.pageLength will be used.
      * @returns {object} JSON Object
      */
-    toJSON(applyPagination, page, pageLength) {
+    toJSON(applyPagination, page, pageLength, allowNFE = false) {
         const json = {
             projects: this.projects.map(project => {
                 // clone & remove stuff that may increase network usage
@@ -50,6 +50,7 @@ class ProjectList {
             const projects = json.projects;
             json.projects = projects.slice(startIdx, endIdx);
         }
+        if (!allowNFE) json.projects = json.projects.filter(project => project.nfe !== true);
         return json;
     }
     /**
