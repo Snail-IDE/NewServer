@@ -1,6 +1,7 @@
 // return;
 require('dotenv').config();
 
+// blockedips.json is not a database.
 const BlockedIPs = require("./blockedips.json"); // if you are cloning this, make sure to make this file
 
 // TODO: Despaghettify this.
@@ -38,11 +39,11 @@ const ProjectList = require("./classes/ProjectList.js");
 const GenericList = require("./classes/GenericList.js");
 const ReportList = require("./classes/ReportList.js");
 
-const AdminAccountUsernames = new Database(`${__dirname}/admins.json`);
-const ApproverUsernames = new Database(`${__dirname}/approvers.json`);
-const Log = new Database(`${__dirname}/../log.json`);
+const AdminAccountUsernames = new Database(`${__dirname}/data/admins.json`);
+const ApproverUsernames = new Database(`${__dirname}/data/approvers.json`);
+const Log = new Database(`${__dirname}/data/../log.json`);
 
-const GlobalRuntimeConfig = new Database(`${__dirname}/globalsettings.json`);
+const GlobalRuntimeConfig = new Database(`${__dirname}/data/globalsettings.json`);
 
 // UserManager.setCode('debug', 'your-mom');
 let Profanity = [];
@@ -151,6 +152,7 @@ const safeZipParse = (buffer, options) => {
     });
 };
 
+// illegalextensions.json is not a database.
 const illegalExtensionsList = require("./illegalextensions.json");
 const checkExtensionIsAllowed = (extension, isUrl) => {
     if (!extension) return true;
@@ -223,7 +225,7 @@ app.get('/api/ping', async function (_, res) {
 });
 const projectTemplate = fs.readFileSync('./project.html').toString();
 app.get('/:id', async function (req, res) {
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     const json = db.get(String(req.params.id));
     if (!json) {
         res.sendFile(path.join(__dirname, './404-noproject.html'));
@@ -247,7 +249,7 @@ const GenerateProfileJSON = (username) => {
     let rank = UserManager.getProperty(username, "rank");
     if (typeof rank !== "number") rank = 0;
     const signInDate = UserManager.getProperty(username, "firstLogin") || Date.now();
-    const projectsDatabase = new Database(`${__dirname}/projects/published.json`);
+    const projectsDatabase = new Database(`${__dirname}/data/projects/published.json`);
     const userProjects = projectsDatabase.all()
         .map(value => { return value.data })
         .filter(project => (project.owner === username));
@@ -311,7 +313,7 @@ app.post('/api/users/requestRankUp', async function (req, res) {
         return;
     }
     const signInDate = UserManager.getProperty(username, "firstLogin") || Date.now();
-    const projectsDatabase = new Database(`${__dirname}/projects/published.json`);
+    const projectsDatabase = new Database(`${__dirname}/data/projects/published.json`);
     const userProjects = projectsDatabase.all()
         .map(value => { return value.data })
         .filter(project => (project.owner === username));
@@ -390,7 +392,7 @@ app.get('/api/projects/getApproved', async function (req, res) {
         return;
     }
 
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     // this is explained in paged api but basically just add normal projects to featured projects
     // because otherwise featured projects would come after normal projects
     const featuredProjects = [];
@@ -424,7 +426,7 @@ app.get('/api/projects/max', async function (req, res) {
     }
 
     function grabArray() {
-        const db = new Database(`${__dirname}/projects/published.json`)
+        const db = new Database(`${__dirname}/data/projects/published.json`)
         // this is explained in paged api but basically just add normal projects to featured projects
         // because otherwise featured projects would come after normal projects
         const featuredProjects = [];
@@ -478,7 +480,7 @@ app.get('/api/projects/getUnapproved', async function (req, res) {
         log('unapprovedProjects', `${packet.user} tried to access unapproved projects but they were not authorized to access them.`)
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`)
+    const db = new Database(`${__dirname}/data/projects/published.json`)
     const projects = db.all().map(value => { return value.data }).sort((project, sproject) => {
         return sproject.date - project.date;
     }).filter(proj => proj.accepted === false);
@@ -494,7 +496,7 @@ app.get('/api/projects/getUnapproved', async function (req, res) {
 });
 // pm wrappers so that pm code doesnt need to be changed in a major way
 app.get('/api/pmWrapper/projects', async function (req, res) { // add featured projects and normal projects together
-    const db = new Database(`${__dirname}/projects/published.json`)
+    const db = new Database(`${__dirname}/data/projects/published.json`)
     // this is explained in paged api but basically just add normal projects to featured projects
     // because otherwise featured projects would come after normal projects
     const featuredProjects = []
@@ -522,7 +524,7 @@ app.get('/api/pmWrapper/remixes', async function (req, res) { // get remixes of 
         res.json({ "error": "IdNotSpecified" });
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     // we dont care about featured projects here because remixes cant be featured
     const json = db.all().map(value => { return value.data }).sort((project, sproject) => {
         return sproject.date - project.date;
@@ -539,14 +541,14 @@ app.get('/api/pmWrapper/iconUrl', async function (req, res) { // get icon url of
         res.json({ "error": "IdNotSpecified" });
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     const json = db.get(String(req.query.id));
     if (!json) {
         res.status(400);
         res.json({ "error": "IdNotValid" });
         return;
     }
-    fs.readFile(`./projects/uploadedImages/p${json.id}.gif`, (err, buffer) => {
+    fs.readFile(`${__dirname}/data/projects/uploadedImages/p${json.id}.gif`, (err, buffer) => {
         if (err) {
             res.status(404);
             res.json({
@@ -587,7 +589,7 @@ app.get('/api/pmWrapper/getProject', async function (req, res) { // get data of 
         res.json({ "error": "IdNotSpecified" });
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     const json = db.get(String(req.query.id));
     if (!json) {
         res.status(400);
@@ -715,7 +717,7 @@ app.get('/api/users/getMyProjects', async function (req, res) { // get projects 
         res.json({ "error": "Reauthenticate" });
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     const projects = db.all().map(data => data.data).filter(project => project.owner === req.query.user);
 
     let result = projects;
@@ -748,7 +750,7 @@ app.get('/api/users/getMyProjects', async function (req, res) { // get projects 
 
     // paginate
     const projectsList = new ProjectList(result);
-    const returning = projectsList.toJSON(true, Cast.toNumber(req.query.page));
+    const returning = projectsList.toJSON(true, Cast.toNumber(req.query.page), null, true);
     res.status(200)
     res.header("Content-Type", 'application/json');
     res.json(returning)
@@ -1378,7 +1380,7 @@ app.post('/api/users/deleteReports', async function (req, res) {
         return;
     }
 
-    const reportDB = new Database(`./userreports.json`);
+    const reportDB = new Database(`${__dirname}/data/userreports.json`);
     const reportedUsername = Cast.toString(packet.id);
     if (!reportDB.has(reportedUsername)) {
         res.status(404);
@@ -1411,7 +1413,7 @@ app.get('/api/projects/report', async function (req, res) {
     const reportedProject = Cast.toString(packet.target);
     const reportedReason = Cast.toString(packet.reason).substring(0, 2048);
 
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     const project = db.get(reportedProject);
     if (!project) {
         res.status(404);
@@ -1420,7 +1422,7 @@ app.get('/api/projects/report', async function (req, res) {
         return;
     }
 
-    const reportDB = new Database(`./projectreports.json`);
+    const reportDB = new Database(`${__dirname}/data/projectreports.json`);
     let projectReports = reportDB.get(reportedProject);
     if (!Array.isArray(projectReports)) projectReports = [];
 
@@ -1480,7 +1482,7 @@ app.get('/api/projects/getReports', async function (req, res) {
     }
     const projectId = Cast.toString(packet.target);
 
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     const project = db.get(projectId);
     if (!project) {
         res.status(404);
@@ -1489,7 +1491,7 @@ app.get('/api/projects/getReports', async function (req, res) {
         return;
     }
 
-    const reportDB = new Database(`./projectreports.json`);
+    const reportDB = new Database(`${__dirname}/data/projectreports.json`);
     let projectReports = reportDB.get(projectId);
     if (!Array.isArray(projectReports)) projectReports = [];
     const mergedReports = new ReportList(projectReports).toMerged();
@@ -1514,9 +1516,9 @@ app.get('/api/projects/getContentWithReports', async function (req, res) {
         return;
     }
 
-    const reportDB = new Database(`./projectreports.json`);
+    const reportDB = new Database(`${__dirname}/data/projectreports.json`);
     const allReports = reportDB.all();
-    const projectDB = new Database(`${__dirname}/projects/published.json`);
+    const projectDB = new Database(`${__dirname}/data/projects/published.json`);
 
     const properFormattedReports = allReports
         .sort((project, sproject) => sproject.data.length - project.data.length)
@@ -1561,7 +1563,7 @@ app.post('/api/projects/deleteReports', async function (req, res) {
         return;
     }
 
-    const reportDB = new Database(`./projectreports.json`);
+    const reportDB = new Database(`${__dirname}/data/projectreports.json`);
     const projectId = Cast.toString(packet.id);
     if (!reportDB.has(projectId)) {
         res.status(404);
@@ -1783,7 +1785,7 @@ app.get('/api/projects/approve', async function (req, res) {
         res.json({ "error": "FeatureDisabledForThisAccount" });
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     if (!db.has(packet.id)) {
         res.status(400);
         res.header("Content-Type", 'application/json');
@@ -1924,7 +1926,7 @@ app.post('/api/projects/nfe', async function (req, res) {
         res.json({ "error": "NFEReasonIsLessThan10Chars" });
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     if (!db.has(String(packet.id))) {
         res.status(400);
         res.header("Content-Type", 'application/json');
@@ -1964,7 +1966,7 @@ app.post('/api/projects/undoNfe', async function (req, res) {
         res.json({ "error": "FeatureDisabledForThisAccount" });
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     if (!db.has(String(packet.id))) {
         res.status(400);
         res.header("Content-Type", 'application/json');
@@ -2009,7 +2011,7 @@ app.post('/api/projects/reject', async function (req, res) {
         res.json({ "error": "RejectionReasonIsLessThan10Chars" });
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     if (!db.has(String(packet.id))) {
         res.status(400);
         res.header("Content-Type", 'application/json');
@@ -2035,15 +2037,15 @@ app.post('/api/projects/reject', async function (req, res) {
         disputable: true
     });
     db.delete(String(packet.id));
-    const projectFilePath = `./projects/uploaded/p${packet.id}.snail`;
-    const projectImagePath = `./projects/uploadedImages/p${packet.id}.gif`;
-    const backupProjectMetaPath = `./projects/backup/proj${packet.id}.json`;
+    const projectFilePath = `${__dirname}/data/projects/uploaded/p${packet.id}.snail`;
+    const projectImagePath = `${__dirname}/data/projects/uploadedImages/p${packet.id}.gif`;
+    const backupProjectMetaPath = `${__dirname}/data/projects/backup/proj${packet.id}.json`;
     fs.writeFile(backupProjectMetaPath, JSON.stringify(project, null, 4), 'utf8', (err) => {
         if (err) return console.log('failed to backup project meta for', packet.id);
     });
     fs.readFile(projectFilePath, (err, data) => {
         if (err) return console.log('failed to open project file for', packet.id, ', will not be deleted from rejection');
-        fs.writeFile(`./projects/backup/proj${packet.id}.pmp`, data, (err) => {
+        fs.writeFile(`${__dirname}/data/projects/backup/proj${packet.id}.pmp`, data, (err) => {
             if (err) return console.log('failed to backup project file for', packet.id, ', will not be deleted from rejection');
             fs.unlink(projectFilePath, err => {
                 if (err) console.log("failed to delete project data for", packet.id, ";", err);
@@ -2052,7 +2054,7 @@ app.post('/api/projects/reject', async function (req, res) {
     });
     fs.readFile(projectImagePath, (err, data) => {
         if (err) return console.log('failed to open image for', packet.id, ', will not be deleted from rejection');
-        fs.writeFile(`./projects/backup/proj${packet.id}.gif`, data, (err) => {
+        fs.writeFile(`${__dirname}/data/projects/backup/proj${packet.id}.gif`, data, (err) => {
             if (err) return console.log('failed to backup project image for', packet.id, ', will not be deleted from rejection');
             fs.unlink(projectImagePath, err => {
                 if (err) console.log("failed to delete project image for", packet.id, ";", err);
@@ -2077,7 +2079,7 @@ app.get('/api/projects/downloadRejected', async function (req, res) {
         && !ApproverUsernames.get(Cast.toString(packet.approver))
     ) {
         const allowed = await new Promise((resolve) => {
-            const backupProjectMetaPath = `./projects/backup/proj${packet.id}.json`;
+            const backupProjectMetaPath = `${__dirname}/data/projects/backup/proj${packet.id}.json`;
             fs.readFile(backupProjectMetaPath, 'utf8', (err, data) => {
                 if (err) {
                     // this was rejected so long ago that we really dont care that anyone can download it
@@ -2094,7 +2096,7 @@ app.get('/api/projects/downloadRejected', async function (req, res) {
             return;
         }
     }
-    const projectDataPath = `./projects/backup/proj${packet.id}.pmp`;
+    const projectDataPath = `${__dirname}/data/projects/backup/proj${packet.id}.pmp`;
     fs.readFile(projectDataPath, (err) => {
         if (err) {
             res.status(404);
@@ -2125,15 +2127,15 @@ app.post('/api/projects/restoreRejected', async function (req, res) {
     }
 
     // attempt to restore
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     const projectId = packet.id;
 
-    const backupProjectFilePath = `./projects/backup/proj${projectId}.pmp`;
-    const backupProjectImagePath = `./projects/backup/proj${projectId}.gif`;
-    const backupProjectMetaPath = `./projects/backup/proj${projectId}.json`;
+    const backupProjectFilePath = `${__dirname}/data/projects/backup/proj${projectId}.pmp`;
+    const backupProjectImagePath = `${__dirname}/data/projects/backup/proj${projectId}.gif`;
+    const backupProjectMetaPath = `${__dirname}/data/projects/backup/proj${projectId}.json`;
 
-    const restoredProjectFilePath = `./projects/uploaded/p${projectId}.snail`;
-    const restoredProjectImagePath = `./projects/uploadedImages/p${projectId}.gif`;
+    const restoredProjectFilePath = `${__dirname}/data/projects/uploaded/p${projectId}.snail`;
+    const restoredProjectImagePath = `${__dirname}/data/projects/uploadedImages/p${projectId}.gif`;
     // PROJECT FILE
     fs.readFile(backupProjectFilePath, (err, data) => {
         if (err) {
@@ -2252,9 +2254,9 @@ app.post('/api/projects/deleteRejected', async function (req, res) {
     // attempt to delete
     const projectId = packet.id;
 
-    const backupProjectFilePath = `./projects/backup/proj${projectId}.pmp`;
-    const backupProjectImagePath = `./projects/backup/proj${projectId}.gif`;
-    const backupProjectMetaPath = `./projects/backup/proj${projectId}.json`;
+    const backupProjectFilePath = `${__dirname}/data/projects/backup/proj${projectId}.pmp`;
+    const backupProjectImagePath = `${__dirname}/data/projects/backup/proj${projectId}.gif`;
+    const backupProjectMetaPath = `${__dirname}/data/projects/backup/proj${projectId}.json`;
     // PROJECT FILE
     fs.unlink(backupProjectFilePath, (err) => {
         if (err) {
@@ -2299,7 +2301,7 @@ app.get('/api/projects/feature', async function (req, res) {
         return;
     }
     const idToSetTo = String(packet.id);
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     if (!db.has(idToSetTo)) {
         res.status(400);
         res.header("Content-Type", 'application/json');
@@ -2365,7 +2367,7 @@ app.post('/api/projects/toggleProjectVote', async function (req, res) {
         return;
     }
     const idToSetTo = String(packet.id);
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     if (!db.has(idToSetTo)) {
         res.status(400);
         res.header("Content-Type", 'application/json');
@@ -2464,7 +2466,7 @@ app.get('/api/projects/getProjectVote', async function (req, res) {
         return;
     }
     const idToSetTo = String(packet.id);
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     if (!db.has(idToSetTo)) {
         res.status(400);
         res.header("Content-Type", 'application/json');
@@ -2497,7 +2499,7 @@ app.get('/api/projects/delete', async function (req, res) {
         res.json({ "error": "Reauthenticate" });
         return;
     }
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     if (!db.has(packet.id)) {
         res.status(400);
         res.header("Content-Type", 'application/json');
@@ -2514,10 +2516,10 @@ app.get('/api/projects/delete', async function (req, res) {
         }
     }
     db.delete(String(packet.id));
-    fs.unlink(`./projects/uploaded/p${packet.id}.snail`, err => {
+    fs.unlink(`${__dirname}/data/projects/uploaded/p${packet.id}.snail`, err => {
         if (err) console.log("failed to delete project data for", packet.id, ";", err);
     })
-    fs.unlink(`./projects/uploadedImages/p${packet.id}.gif`, err => {
+    fs.unlink(`${__dirname}/data/projects/uploadedImages/p${packet.id}.gif`, err => {
         if (err) console.log("failed to delete project image for", packet.id, ";", err);
     })
     console.log(packet.approver, "deleted", packet.id);
@@ -2543,7 +2545,7 @@ app.post('/api/projects/update', async function (req, res) {
         return;
     }
 
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
     const id = String(packet.id);
     if (!db.has(id)) {
         res.status(400);
@@ -2684,7 +2686,7 @@ app.post('/api/projects/update', async function (req, res) {
                     }
                 }
             }
-            fs.writeFile(`./projects/uploaded/p${id}.snail`, buffer, (err) => {
+            fs.writeFile(`${__dirname}/data/projects/uploaded/p${id}.snail`, buffer, (err) => {
                 if (err) console.error(err);
             });
         }
@@ -2697,7 +2699,7 @@ app.post('/api/projects/update', async function (req, res) {
     if (Cast.isString(projectbufferImage)) {
         const buffer = Cast.dataURLToBuffer(projectbufferImage);
         if (buffer) {
-            fs.writeFile(`./projects/uploadedImages/p${id}.gif`, buffer, (err) => {
+            fs.writeFile(`${__dirname}/data/projects/uploadedImages/p${id}.gif`, buffer, (err) => {
                 if (err) console.error(err);
             });
         }
@@ -2771,7 +2773,7 @@ app.post('/api/projects/publish', async function (req, res) {
     }
 
     // cooldown check
-    let db = new Database(`${__dirname}/cooldown.json`);
+    let db = new Database(`${__dirname}/data/cooldown.json`);
     const cooldown = Number(db.get(Cast.toString(packet.author)));
     if (Date.now() < cooldown) {
         res.status(429);
@@ -3011,7 +3013,7 @@ app.post('/api/projects/publish', async function (req, res) {
     db.set(packet.author, Date.now() + 480000);
 
     // create project id
-    db = new Database(`${__dirname}/projects/published.json`);
+    db = new Database(`${__dirname}/data/projects/published.json`);
     let _id = Math.round(100000 + (Math.random() * 9999999999999));
     if (db.has(String(_id))) {
         while (db.has(String(_id))) _id++;
@@ -3019,16 +3021,16 @@ app.post('/api/projects/publish', async function (req, res) {
     const id = _id;
 
     // we already checked earlier if this was a valid project
-    fs.writeFile(`./projects/uploaded/p${id}.snail`, project, (err) => {
+    fs.writeFile(`${__dirname}/data/projects/uploaded/p${id}.snail`, project, (err) => {
         if (err) console.error(err);
     });
     const image = Cast.dataURLToBuffer(packet.image);
     if (image) {
-        fs.writeFile(`${__dirname}/projects/uploadedImages/p${id}.gif`, image, (err) => {
+        fs.writeFile(`${__dirname}/data/projects/uploadedImages/p${id}.gif`, image, (err) => {
             if (err) console.error(err);
         });
     } else {
-        fs.copyFile(`${__dirname}/cache/thumb.png`, `${__dirname}/projects/uploadedImages/p${id}.gif`, image, (err) => {
+        fs.copyFile(`${__dirname}/cache/thumb.png`, `${__dirname}/data/projects/uploadedImages/p${id}.gif`, image, (err) => {
             if (err) console.error(err);
         });
     }
@@ -3110,11 +3112,11 @@ app.get('/api/projects/getPublished', async function (req, res) {
         res.json({ "error": "NoIDSpecified" });
         return;
     }
-    db = new Database(`${__dirname}` + "/projects/published" + ".json");
+    db = new Database(`${__dirname}/data/projects/published.json`);
     if (db.has(String(req.query.id))) {
         const project = db.get(String(req.query.id));
         if (String(req.query.type) == "file") {
-            fs.readFile(`./projects/uploaded/p${project.id}.snail`, (err, data) => {
+            fs.readFile(`${__dirname}/data/projects/uploaded/p${project.id}.snail`, (err, data) => {
                 if (err) {
                     res.status(500);
                     res.header("Content-Type", 'text/plain');
@@ -3158,7 +3160,7 @@ app.get('/api/projects/search', async function (req, res) {
         return;
     }
 
-    const db = new Database(`${__dirname}/projects/published.json`);
+    const db = new Database(`${__dirname}/data/projects/published.json`);
 
     const projectOwnerRequired = req.query.user;
     const projectSearchingName = req.query.includes;
@@ -3257,24 +3259,24 @@ async function checkProfanity(text) {
     return false;
 }
 function getNewCommentId(type) {
-    let db = new Database(`${__dirname}/commentcount.json`);
+    let db = new Database(`${__dirname}/data/commentcount.json`);
     db.add(type, 1);
     return db.get(type);
 }
 function getLastCommented(user) {
-    let db = new Database(`${__dirname}/lastcommented.json`);
+    let db = new Database(`${__dirname}/data/lastcommented.json`);
     return db.get(user);
 }
 function setLastCommented(user, cmt) {
-    let db = new Database(`${__dirname}/lastcommented.json`);
+    let db = new Database(`${__dirname}/data/lastcommented.json`);
     return db.set(user, cmt);
 }
 function getLastReplied(user) {
-    let db = new Database(`${__dirname}/lastreplied.json`);
+    let db = new Database(`${__dirname}/data/lastreplied.json`);
     return db.get(user);
 }
 function setLastReplied(user, cmt) {
-    let db = new Database(`${__dirname}/lastreplied.json`);
+    let db = new Database(`${__dirname}/data/lastreplied.json`);
     return db.set(user, cmt);
 }
 function addToRatelimit(ip) {

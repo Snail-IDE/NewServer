@@ -1,5 +1,5 @@
 const Database = require("easy-json-database");
-const Log = new Database(`${__dirname}/../log.json`);
+const Log = new Database(`${__dirname}/../data/log.json`);
 
 const log = (type, message) => {
     const data = {};
