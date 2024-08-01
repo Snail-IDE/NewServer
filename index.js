@@ -1707,17 +1707,28 @@ app.post('/api/users/disputeRespond', async function (req, res) {
     }
     const messages = UserManager.getMessages(packet.username);
     const message = messages.filter(message => message.id === packet.id)[0];
-    if (!message) {
+    if (packet.id !== '' && !message) {
         res.status(404);
         res.header("Content-Type", 'application/json');
         res.json({ "error": "NotFound" });
         return;
     }
-    if (!message.type === 'reject') {
+    if (message && !message.type === 'reject') {
         res.status(400);
         res.header("Content-Type", 'application/json');
         res.json({ "error": "MessageNotDisputable" });
         return;
+    }
+
+    if (!message) {
+        UserManager.addModeratorMessage(packet.username, {
+            type: "modMessage",
+            reason: packet.reason,
+            disputable: true
+        });
+        res.status(200);
+        res.header("Content-Type", 'application/json');
+        return res.json({ "success": true });
     }
 
     // add message
