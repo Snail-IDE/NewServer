@@ -614,7 +614,7 @@ app.get('/api/users/login', async function (req, res) { // login with scratch
             res.header("Content-Type", 'application/json');
             res.json({ "error": "InvalidLogin" });
             if (invalidRedirect) {
-                console.log(response.redirect, "tried to falsely authenticate", response.username);
+                log(response.redirect, "tried to falsely authenticate", response.username);
             }
             return;
         }
