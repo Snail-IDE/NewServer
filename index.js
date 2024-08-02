@@ -1669,9 +1669,9 @@ app.post('/api/users/dispute', async function (req, res) {
         }
     }); */
 });
-app.post('/api/getLog', function (req, res) {
-    const packet = req.body;
-    if (!UserManager.isCorrectCode(packet.approver, packet.passcode)) {
+app.get('/api/getLog', function (req, res) {
+    const packet = req.query;
+    if (!UserManager.isCorrectCode(packet.user, packet.passcode)) {
         res.status(400);
         res.header("Content-Type", 'application/json');
         res.json({ "error": "Reauthenticate" });
