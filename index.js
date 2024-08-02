@@ -41,7 +41,6 @@ const ReportList = require("./classes/ReportList.js");
 
 const AdminAccountUsernames = new Database(`${__dirname}/data/admins.json`);
 const ApproverUsernames = new Database(`${__dirname}/data/approvers.json`);
-const Log = new Database(`${__dirname}/data/../log.json`);
 
 const GlobalRuntimeConfig = new Database(`${__dirname}/data/globalsettings.json`);
 
@@ -1670,6 +1669,7 @@ app.post('/api/users/dispute', async function (req, res) {
 }); */
 });
 app.get('/api/getLog', function (req, res) {
+    const db = new Database(`${__dirname}/data/log.json`);
     const packet = req.query;
     if (!UserManager.isCorrectCode(packet.user, packet.passcode)) {
         res.status(400);
@@ -1683,7 +1683,7 @@ app.get('/api/getLog', function (req, res) {
         res.json({ "error": "FeatureDisabledForThisAccount" });
         return;
     }
-    return res.json(Log.all());
+    return res.json(db.get('logs'));
 });
 app.get('/api/backup', function (req, res) {
     const packet = req.query;
