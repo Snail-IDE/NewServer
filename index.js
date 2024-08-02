@@ -1677,10 +1677,7 @@ app.get('/api/getLog', function (req, res) {
         res.json({ "error": "Reauthenticate" });
         return;
     }
-    if (
-        !AdminAccountUsernames.get(Cast.toString(packet.approver))
-        && !ApproverUsernames.get(Cast.toString(packet.approver))
-    ) {
+    if (!AdminAccountUsernames.get(Cast.toString(packet.approver))) {
         res.status(403);
         res.header("Content-Type", 'application/json');
         res.json({ "error": "FeatureDisabledForThisAccount" });
