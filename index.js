@@ -614,7 +614,7 @@ app.get('/api/users/login', async function (req, res) { // login with scratch
             res.header("Content-Type", 'application/json');
             res.json({ "error": "InvalidLogin" });
             if (invalidRedirect) {
-                log(response.redirect, "tried to falsely authenticate", response.username);
+                log('maliciousAuthentication', `${response.redirect} tried to falsely authenticate ${response.username}.`);
             }
             return;
         }
@@ -1653,21 +1653,21 @@ app.post('/api/users/dispute', async function (req, res) {
         body
     }).then(log => {
         if (log.ok) { */
-            UserManager.modifyMessage(packet.username, packet.id, message => {
-                message.disputable = false;
-                message.dispute = packet.text ?? ''
-                return message;
-            });
+    UserManager.modifyMessage(packet.username, packet.id, message => {
+        message.disputable = false;
+        message.dispute = packet.text ?? ''
+        return message;
+    });
 
-            res.status(200);
-            res.header("Content-Type", 'application/json');
-            res.json({ "success": true });
-        /* } else {
-            res.status(500);
-            res.header('Content-Type', 'application/json')
-            res.json({ error: 'LogFailed' })
-        }
-    }); */
+    res.status(200);
+    res.header("Content-Type", 'application/json');
+    res.json({ "success": true });
+    /* } else {
+        res.status(500);
+        res.header('Content-Type', 'application/json')
+        res.json({ error: 'LogFailed' })
+    }
+}); */
 });
 app.get('/api/getLog', function (req, res) {
     const packet = req.query;
@@ -1684,6 +1684,28 @@ app.get('/api/getLog', function (req, res) {
         return;
     }
     return res.json(Log.all());
+});
+app.get('/api/backup', function (req, res) {
+    const packet = req.query;
+    const child_process = require('child_process');
+    if (!UserManager.isCorrectCode(packet.user, packet.passcode)) {
+        res.status(400);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "Reauthenticate" });
+        return;
+    }
+    if (!AdminAccountUsernames.get(Cast.toString(packet.user))) {
+        res.status(403);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "FeatureDisabledForThisAccount" });
+        return;
+    }
+    log('dataRequested', `${packet.user} requested a copy of all data.`)
+    console.log(`zip -r ./data.zip ./data/`);
+    child_process.execSync(`zip -r './data.zip' './data/'`);
+    res.sendFile(`${__dirname}/data.zip`, () => {
+        fs.unlinkSync(`${__dirname}/data.zip`);
+    });
 });
 app.post('/api/users/disputeRespond', async function (req, res) {
     const packet = req.body;
@@ -1879,7 +1901,7 @@ app.get('/api/projects/approve', async function (req, res) {
     res.status(200);
     res.header("Content-Type", 'application/json');
     res.json({ "success": true });
-    
+
     if (Cast.toBoolean(req.query.webhook) === false) return;
     const projectImage = String(`https://snailshare-backend.glitch.me/api/pmWrapper/iconUrl?id=${project.id}&rn=${Math.round(Math.random() * 9999999)}`);
     const body = JSON.stringify({
