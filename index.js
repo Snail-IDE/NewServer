@@ -222,6 +222,10 @@ app.get('/api', async function (_, res) {
 app.get('/api/ping', async function (_, res) {
     res.send("Pong!")
 });
+// Error?
+app.get('/api/warnings', async function (_, res) {
+    res.json({warnings: warnings});
+});
 const projectTemplate = fs.readFileSync('./project.html').toString();
 app.get('/:id', async function (req, res) {
     const db = new Database(`${__dirname}/data/projects/published.json`);
