@@ -201,6 +201,7 @@ app.use(rateLimit({
 }));
 
 app.use((err, req, res, next) => {
+    log('error', err.stack);
     console.error(err.stack);
     res.status(500).json({ "error": "Report" });
 });
