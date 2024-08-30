@@ -273,6 +273,7 @@ const GenerateProfileJSON = (username) => {
         cool: isCool,
         rank,
         followers: followers.length,
+        followersList: followers.length !== 0 ? followers : 'none',
         canrankup: canRequestRankUp && rank === 0,
         viewable: userProjects.length > 0,
         projects: userProjects.length // we check projects anyways so might aswell
