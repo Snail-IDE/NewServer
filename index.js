@@ -47,8 +47,11 @@ const GlobalRuntimeConfig = new Database(`${__dirname}/data/globalsettings.json`
 // UserManager.setCode('debug', 'your-mom');
 let Profanity = [];
 
-app.use(express.json({ limit: '25mb' })); // Adjust the limit as needed
-app.use(express.urlencoded({ extended: true, limit: '25mb' })); // Adjust the limit
+app.use(express.json({ limit: process.env.ServerSize ?? '50mb' })); // Adjust the limit as needed
+app.use(express.urlencoded({
+    limit: process.env.ServerSize ?? '50mb', 
+    extended: false
+})); // Adjust the limit
 function DecryptArray(array) {
     const na = [];
     for (const value of array) {
@@ -178,11 +181,6 @@ app.use(cors({
     origin: '*',
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
-app.use(bodyParser.urlencoded({
-    limit: process.env.ServerSize,
-    extended: false
-}));
-app.use(bodyParser.json({ limit: process.env.ServerSize }));
 app.use((req, res, next) => {
     if (BlockedIPs.includes(req.ip)) return res.sendStatus(403);
     console.log(`${req.ip}: ${req.originalUrl}`);
@@ -200,11 +198,30 @@ app.use(rateLimit({
     legacyHeaders: false,
 }));
 
-app.use((err, req, res, next) => {
+const errorHandler = (err, req, res, next) => {
+    // Allow requests from both 'https://snail-ide.vercel.app' and 'https://snail-ide.js.org,' this also allows our test frontend
+    const origin = req.header('Origin');
+    switch (origin) {
+        case 'https://snail-ide.vercel.app':
+        case 'https://snail-ide.js.org':
+        case 'https://test-henna-alpha-94.vercel.app':
+        case 'https://snail-ide.com':
+        // case 'http://localhost:5173':
+        case 'https://editor.snail-ide.com':
+            res.set('Access-Control-Allow-Origin', origin);
+            break;
+        default:
+            break;
+    }
+    // You can also use '*' to allow any origin, but this is less secure
+    // res.header('Access-Control-Allow-Origin', '*');
     log('error', err.stack);
     console.error(err.stack);
-    res.status(500).json({ "error": "Report" });
-});
+    if (err.name === 'PayloadTooLargeError') return res.status(413).json({ "error": "RequestTooLarge" });
+    return res.status(500).json({ "error": "Report" });
+};
+
+app.use(errorHandler);
 
 app.get('/', async function (_, res) { // just basic stuff. returns the home page
     res.redirect('https://snail-ide.vercel.app/');
