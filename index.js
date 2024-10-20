@@ -644,6 +644,7 @@ app.get('/api/users/login', async function (req, res) { // login with scratch
         const username = response.username;
         UserManager.setCode(username, privateCode);
         if (!UserManager.getProperty(username, "firstLogin")) {
+            UserManager.setProperty(username, "coins", 25)
             UserManager.setProperty(username, "firstLogin", Date.now());
         }
         // close window by opening success.html
@@ -1252,6 +1253,76 @@ app.post('/api/users/unban', async function (req, res) {
                 name: String(bannedUser).substring(0, 50),
                 icon_url: String("https://trampoline.turbowarp.org/avatars/by-username/" + String(bannedUser).substring(0, 50)),
                 url: String("https://snail-ide.vercel.app/profile?user=" + String(bannedUser).substring(0, 50))
+            },
+            timestamp: new Date().toISOString()
+        }]
+    });
+    fetch(process.env.ApproverLogWebhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body
+    }).then(log => {
+        if (log.ok) {
+            res.status(200);
+            res.header("Content-Type", 'application/json');
+            res.json({ "success": true });
+        } else {
+            res.status(500);
+            res.header('Content-Type', 'application/json')
+            res.json({ error: 'LogFailed' })
+        }
+    });
+});
+// COINS
+app.post('/api/users/givecoins', async function (req, res) {
+    const packet = req.body;
+    if (!UserManager.isCorrectCode(packet.username, packet.passcode)) {
+        res.status(400);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "Reauthenticate" });
+        return;
+    }
+    if (
+        !AdminAccountUsernames.get(Cast.toString(packet.username))
+        && !ApproverUsernames.get(Cast.toString(packet.username))
+    ) {
+        res.status(403);
+        res.header("Content-Type", 'application/json');
+        res.json({ "error": "FeatureDisabledForThisAccount" });
+        return;
+    }
+
+    const usertogive = Cast.toString(packet.target);
+
+    // give coins
+    UserManager.givecoins(usertogive);
+    // add message
+    UserManager.addModeratorMessage(usertogive, {
+        type: "coins",
+        reason: "Congrats! You have been given coins from a mod!",
+        disputable: false // lol
+    });
+
+    // post log
+    const body = JSON.stringify({
+        content: `${usertogive} was given coins by ${packet.username}`,
+        embeds: [{
+            title: `${usertogive} was given coins`,
+            color: 0x00ff00,
+            fields: [
+                {
+                    name: "Given coins by",
+                    value: `${packet.username}`
+                },
+                {
+                    name: "idklol",
+                    value: `${usertogive}`
+                }
+            ],
+            author: {
+                name: String(usertogive).substring(0, 50),
+                icon_url: String("https://trampoline.turbowarp.org/avatars/by-username/" + String(usertogive).substring(0, 50)),
+                url: String("https://snail-ide.com/profile?user=" + String(usertogive).substring(0, 50))
             },
             timestamp: new Date().toISOString()
         }]
@@ -3555,4 +3626,5 @@ app.post('/api/deleteComment', async (req, res) => {
     db.set(req.query.project, newproject);
     res.send({ "message": "success" });
 });
+
 app.listen(port, () => console.log('Started server on port ' + port));
