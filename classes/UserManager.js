@@ -230,6 +230,20 @@ class UserManager {
             [property]: value
         });
     }
+    static givecoins(username, value) {
+        const db = new Database(`./data/userdata.json`);
+        const userdata = db.get(username);
+        if (!userdata) {
+            db.set(username, {
+                "coins": value
+            });
+            return;
+        }
+        db.set(username, {
+            ...userdata,
+            "coins": value
+        });
+    }
 
     static getFollowers(username) {
         const db = new Database(`./data/following.json`);
