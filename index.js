@@ -70,7 +70,7 @@ function EncryptArray(array) {
 }
 app.use((req, res, next) => {
     // Allow requests from both 'https://snail-ide.vercel.app' and 'https://snail-ide.js.org,' this also allows our test frontend
-    res.header('Access-Control-Allow-Origin', 'https://snail-ide.vercel.app/', 'https://snail-ide.js.org', 'https://test-henna-alpha-94.vercel.app/', 'https://snail-ide.com', 'https://editor.snail-ide.com');
+    res.header('Access-Control-Allow-Origin', 'https://snail-ide.vercel.app/', 'https://snailshare.vercel.app/', 'https://snail-ide.js.org', 'https://test-henna-alpha-94.vercel.app/', 'https://snail-ide.com', 'https://editor.snail-ide.com');
     // You can also use '*' to allow any origin, but this is less secure
     // res.header('Access-Control-Allow-Origin', '*');
     next();
@@ -206,6 +206,7 @@ const errorHandler = (err, req, res, next) => {
         case 'https://snail-ide.js.org':
         case 'https://test-henna-alpha-94.vercel.app':
         case 'https://snail-ide.com':
+        case 'https://snailshare.vercel.app/':
         // case 'http://localhost:5173':
         case 'https://editor.snail-ide.com':
             res.set('Access-Control-Allow-Origin', origin);
@@ -1322,7 +1323,7 @@ app.post('/api/users/givecoins', async function (req, res) {
             author: {
                 name: String(usertogive).substring(0, 50),
                 icon_url: String("https://trampoline.turbowarp.org/avatars/by-username/" + String(usertogive).substring(0, 50)),
-                url: String("https://snail-ide.com/profile?user=" + String(usertogive).substring(0, 50))
+                url: String("https://snailshare.vercel.app/profile?user=" + String(usertogive).substring(0, 50))
             },
             timestamp: new Date().toISOString()
         }]
@@ -2058,7 +2059,7 @@ app.post('/api/projects/nfe', async function (req, res) {
         return;
     }
     const project = db.get(String(packet.id));
-    log('projectMarkedAsNFE', `${packet.approver} marked https://editor.snail-ide.com/#${packet.id} by https://www.snail-ide.com/profile?user=${String(project.owner)} as Not for Everyone with the reason "${packet.reason}".`);
+    log('projectMarkedAsNFE', `${packet.approver} marked https://snail-ide.js.org/#${packet.id} by https://www.snail-ide.com/profile?user=${String(project.owner)} as Not for Everyone with the reason "${packet.reason}".`);
     UserManager.addModeratorMessage(project.owner, {
         projectId: String(packet.id),
         type: "nfe",
@@ -2098,7 +2099,7 @@ app.post('/api/projects/undoNfe', async function (req, res) {
         return;
     }
     const project = db.get(String(packet.id));
-    log('projectMarkedAsNotNFE', `${packet.approver} removed the mark for https://editor.snail-ide.com/#${packet.id} by https://www.snail-ide.com/profile?user=${String(project.owner)} as Not for Everyone.`);
+    log('projectMarkedAsNotNFE', `${packet.approver} removed the mark for https://snail-ide.js.org/#${packet.id} by https://www.snail-ide.com/profile?user=${String(project.owner)} as Not for Everyone.`);
     project.nfe = false;
     db.set(String(packet.id), project);
     res.status(200);
@@ -2150,7 +2151,7 @@ app.post('/api/projects/reject', async function (req, res) {
     //     return;
     // }
     // post log
-    log('projectRejected', `${packet.approver} rejected https://editor.snail-ide.com/#${packet.id} by https://www.snail-ide.com/profile?user=${String(project.owner)} with the reason "${packet.reason}".`);
+    log('projectRejected', `${packet.approver} rejected https://snail-ide.js.org/#${packet.id} by https://www.snail-ide.com/profile?user=${String(project.owner)} with the reason "${packet.reason}".`);
     // add message
     UserManager.addModeratorMessage(project.owner, {
         projectId: String(packet.id),
@@ -2549,7 +2550,7 @@ app.post('/api/projects/toggleProjectVote', async function (req, res) {
     if ((targetType === 'votes') && (project.votes.length >= featuredVotes)) {
         if (featuredVotes === 0) {
             warnings += 1;
-            log('warning', `Warning: Project ${String("https://editor.snail-ide.com/#" + String(project.id))} should of been featured but the featured votes variable is set to null or zero. Refusing to feature project.`);
+            log('warning', `Warning: Project ${String("https://snail-ide.js.org/#" + String(project.id))} should of been featured but the featured votes variable is set to null or zero. Refusing to feature project.`);
         }
         // people lik this project
         if (featuredVotes !== 0) {
@@ -2572,7 +2573,7 @@ app.post('/api/projects/toggleProjectVote', async function (req, res) {
                     name: "featured"
                 });
             }
-            log('projectFeatured', `Project ${String("https://editor.snail-ide.com/#" + String(project.id))} has been featured! Hooray!`)
+            log('projectFeatured', `Project ${String("https://snail-ide.js.org/#" + String(project.id))} has been featured! Hooray!`)
         }
     }
     db.set(idToSetTo, project);
